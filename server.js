@@ -9,7 +9,7 @@ const io = new Server(server, {
     cors: { origin: "*" } // Permite conexões de qualquer lugar
 });
 
-
+// Armazena usuários e salas
 const users = {};  // { username: socketId }
 const rooms = ["Discussão sobre Java", "Sala da Inteligência Artificial", "Compartilhando Erros do Node"]; 
 
