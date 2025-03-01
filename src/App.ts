@@ -7,12 +7,38 @@ class App {
   private app: Application;
   private http: http.Server;
   private io: Server;
+
   private rooms: [] = [
-    "Falando de Java",
-    "Discução Sobre Ia",
-    "Procuro Por Um Freela",
-    "NodeJS",
-    "Cloud",
+    {
+      title: "Falando de Java",
+      msg: [],
+      usersOnline: [],
+    },
+    {
+      title: "Discução Sobre Ia",
+      msg: [],
+      usersOnline: [],
+    },
+    {
+      title: "Procuro Por Um Freela",
+      msg: [],
+      usersOnline: [],
+    },
+    {
+      title: "NodeJS",
+      msg: [],
+      usersOnline: [],
+    },
+    {
+      title: "Type Script",
+      msg: [],
+      usersOnline: [],
+    },
+    {
+      title: "Compartilhando Bugs",
+      msg: [],
+      usersOnline: [],
+    },
   ];
 
   constructor() {
@@ -44,14 +70,17 @@ class App {
     this.io.on("connection", (socket) => {
       console.log("Cliente conectado:", socket.id);
 
-      socket.on("joinRoom", (roomName) => {
+      socket.on("joinRoom", (roomName, NikName) => {
         socket.join(roomName);
-        console.log(`${socket.id} entrou na sala: ${roomName}`);
+        const room = this.rooms.find((r) => r.title === roomName);
+        room.usersOnline.push({ id: socket.id });
       });
 
-      socket.on("message", (msg) => {
-        console.log("message:", msg.msg);
-        this.io.emit("message", msg);
+      socket.on("message", (roomName, NikName, msg) => {
+        console.log(
+          `${socket.id} mandou msg: ${msg} na sala ${roomName} nikname: ${NikName}`
+        );
+        this.io.emit("message", roomName, NikName, msg);
       });
 
       socket.on("disconnect", () => {
