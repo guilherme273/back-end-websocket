@@ -8,7 +8,7 @@ class App {
   private http: http.Server;
   private io: Server;
 
-  private rooms: [] = [
+  private rooms = [
     {
       title: "Falando de Java",
       msg: [],
@@ -70,17 +70,18 @@ class App {
     this.io.on("connection", (socket) => {
       console.log("Cliente conectado:", socket.id);
 
-      socket.on("joinRoom", (roomName, NikName) => {
+      socket.on("joinRoom", (roomName) => {
         socket.join(roomName);
-        const room = this.rooms.find((r) => r.title === roomName);
-        room.usersOnline.push({ id: socket.id });
+        console.log("user: ", socket.id, "Entrou na sala: ", roomName);
       });
 
-      socket.on("message", (roomName, NikName, msg) => {
-        console.log(
-          `${socket.id} mandou msg: ${msg} na sala ${roomName} nikname: ${NikName}`
-        );
-        this.io.emit("message", roomName, NikName, msg);
+      socket.on("message", (roomName, msg, NikName, avatar) => {
+        this.io.to(roomName).emit("message", msg, NikName, avatar);
+      });
+
+      socket.on("leaveRoom", (roomName) => {
+        socket.leave(roomName);
+        console.log(`${socket.id} saiu da sala ${roomName}`);
       });
 
       socket.on("disconnect", () => {
