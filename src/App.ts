@@ -3,12 +3,18 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 
+interface ROOM {
+  title: string;
+  msg: { content: string; remetente: string; avatar: string; id: string }[];
+  usersOnline: { id: string; nickname: string }[];
+}
+
 class App {
   private app: Application;
   private http: http.Server;
   private io: Server;
 
-  private rooms = [
+  private rooms: ROOM[] = [
     {
       title: "Falando de Java",
       msg: [],
@@ -47,19 +53,19 @@ class App {
 
     this.io = new Server(this.http, {
       cors: {
-        origin: "*", // Permite qualquer origem
-        methods: ["GET", "POST"], // Permite GET e POST
-        allowedHeaders: ["Content-Type"], // Permite o Content-Type
+        origin: "*",
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
       },
     });
 
-    const corsOptions = {
-      origin: "*", // Permite qualquer origem
-      methods: ["GET", "POST"], // Permite GET e POST
-      allowedHeaders: ["Content-Type"], // Permite o Content-Type
-    };
-
-    this.app.use(cors(corsOptions));
+    this.app.use(
+      cors({
+        origin: "*",
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+      })
+    );
   }
 
   listenServer() {
@@ -70,16 +76,67 @@ class App {
     this.io.on("connection", (socket) => {
       console.log("Cliente conectado:", socket.id);
 
-      socket.on("joinRoom", (roomName) => {
+      socket.on("joinRoom", (roomName, NickName) => {
+        console.log(`${socket.id} entrou na sala ${roomName}`);
         socket.join(roomName);
-        console.log("user: ", socket.id, "Entrou na sala: ", roomName);
+        const room = this.rooms.find((r) => r.title === roomName);
+        if (room) {
+          const user = room.usersOnline.find((user) => user.id === socket.id);
+          if (!user) {
+            room.msg.push({
+              content: `${NickName} Entrou na sala`,
+              remetente: "SYSTEM",
+              avatar: "",
+              id: Date.now().toString(),
+            });
+          }
+        }
+        const msgsRoom = room?.msg;
+        this.io.to(roomName).emit("joinRoom", msgsRoom);
+        const user = room?.usersOnline.find((user) => user.id === socket.id);
+        if (!user) {
+          room?.usersOnline.push({ id: socket.id, nickname: NickName });
+        }
+
+        console.log(this.rooms);
       });
 
-      socket.on("message", (roomName, msg, NikName, avatar) => {
-        this.io.to(roomName).emit("message", msg, NikName, avatar);
+      socket.on("message", (roomName, msg, NikName, avatar, id) => {
+        const room = this.rooms.find((r) => r.title === roomName);
+        if (room) {
+          room.msg.push({ content: msg, remetente: NikName, avatar, id });
+          this.io.to(roomName).emit("message", msg, NikName, avatar, id);
+          console.log(this.rooms);
+        }
       });
 
-      socket.on("leaveRoom", (roomName) => {
+      socket.on("leaveRoom", (roomName, NickName) => {
+        const room = this.rooms.find((r) => r.title === roomName);
+
+        if (room) {
+          const user = room.usersOnline.find((user) => user.id === socket.id);
+
+          if (user) {
+            // Adicionar a mensagem de saída
+            const leaveMsg = {
+              content: `${NickName} Saiu da sala`,
+              remetente: "SYSTEM",
+              avatar: "",
+              id: Date.now().toString(),
+            };
+            room.msg.push(leaveMsg);
+
+            // Emitir a mensagem de saída para os outros usuários na sala imediatamente
+            this.io.to(roomName).emit("leaveRoom", room.msg);
+          }
+
+          // Remover o usuário da lista de online
+          room.usersOnline = room.usersOnline.filter(
+            (user) => user.id !== socket.id
+          );
+        }
+
+        // Fazer o usuário sair da sala
         socket.leave(roomName);
         console.log(`${socket.id} saiu da sala ${roomName}`);
       });
