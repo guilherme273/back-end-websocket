@@ -40,4 +40,4 @@ const app = new App();
 app.listenServer();
 app.listenIo();
 console.log("Servidor e WebSocket configurados com sucesso!");
-//# sourceMappingURL=App.js.mapss
+//# sourceMappingURL=App.js.map
