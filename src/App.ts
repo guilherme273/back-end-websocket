@@ -21,7 +21,7 @@ class App {
       usersOnline: [],
     },
     {
-      title: "Discução Sobre Ia",
+      title: "Discussão Sobre Ia",
       msg: [],
       usersOnline: [],
     },
@@ -41,7 +41,7 @@ class App {
       usersOnline: [],
     },
     {
-      title: "Compartilhando Bugs",
+      title: "Bugs e soluções",
       msg: [],
       usersOnline: [],
     },
