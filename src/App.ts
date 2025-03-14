@@ -1,4 +1,4 @@
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
@@ -7,6 +7,11 @@ interface ROOM {
   title: string;
   msg: { content: string; remetente: string; avatar: string; id: string }[];
   usersOnline: { id: string; nickname: string }[];
+  urlIMG: string;
+}
+interface ALL_USERS_OLINE {
+  id: string;
+  nickname: string;
 }
 
 class App {
@@ -19,33 +24,41 @@ class App {
       title: "Falando de Java",
       msg: [],
       usersOnline: [],
+      urlIMG: "/img/java.jpg",
     },
     {
       title: "Discussão Sobre Ia",
       msg: [],
       usersOnline: [],
+      urlIMG: "/img/java.jpg",
     },
     {
       title: "Procuro Por Um Freela",
       msg: [],
       usersOnline: [],
+      urlIMG: "/img/java.jpg",
     },
     {
       title: "NodeJS",
       msg: [],
       usersOnline: [],
+      urlIMG: "/img/java.jpg",
     },
     {
       title: "Type Script",
       msg: [],
       usersOnline: [],
+      urlIMG: "/img/java.jpg",
     },
     {
       title: "Bugs e soluções",
       msg: [],
       usersOnline: [],
+      urlIMG: "/img/java.jpg",
     },
   ];
+
+  private allUsersOnline: ALL_USERS_OLINE[] = [];
 
   constructor() {
     this.app = express();
@@ -66,6 +79,10 @@ class App {
         allowedHeaders: ["Content-Type"],
       })
     );
+
+    this.app.get("/rooms", (req: Request, res: Response) => {
+      res.json(this.rooms);
+    });
   }
 
   listenServer() {
@@ -75,6 +92,15 @@ class App {
   listenIo() {
     this.io.on("connection", (socket) => {
       console.log("Cliente conectado:", socket.id);
+
+      socket.on("updateTotalUsersOn", (NickName) => {
+        this.allUsersOnline.push({
+          id: socket.id,
+          nickname: NickName,
+        });
+
+        this.io.emit("updateTotalUsersOn", this.allUsersOnline);
+      });
 
       socket.on("joinRoom", (roomName, NickName) => {
         console.log(`${socket.id} entrou na sala ${roomName}`);
@@ -92,12 +118,13 @@ class App {
           }
         }
         const msgsRoom = room?.msg;
-        this.io.to(roomName).emit("joinRoom", msgsRoom);
         const user = room?.usersOnline.find((user) => user.id === socket.id);
         if (!user) {
           room?.usersOnline.push({ id: socket.id, nickname: NickName });
         }
 
+        this.io.to(roomName).emit("joinRoom", msgsRoom);
+        this.io.to(roomName).emit("leaveRoomUpadeArray", this.rooms);
         console.log(this.rooms);
       });
 
@@ -134,6 +161,7 @@ class App {
           room.usersOnline = room.usersOnline.filter(
             (user) => user.id !== socket.id
           );
+          this.io.to(roomName).emit("leaveRoomUpadeArray", this.rooms);
         }
 
         // Fazer o usuário sair da sala
@@ -143,6 +171,14 @@ class App {
 
       socket.on("disconnect", () => {
         console.log("Usuário desconectado:", socket.id);
+
+        const NewArray = this.allUsersOnline.filter(
+          (user) => user.id !== socket.id
+        );
+
+        this.allUsersOnline = NewArray;
+
+        this.io.emit("Userdisconnecting", this.allUsersOnline, this.rooms);
       });
     });
   }
