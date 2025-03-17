@@ -30,31 +30,31 @@ class App {
       title: "Discussão Sobre Ia",
       msg: [],
       usersOnline: [],
-      urlIMG: "/img/java.jpg",
+      urlIMG: "/img/ia.jpg",
     },
     {
       title: "Procuro Por Um Freela",
       msg: [],
       usersOnline: [],
-      urlIMG: "/img/java.jpg",
+      urlIMG: "/img/freelancer.png",
     },
     {
       title: "NodeJS",
       msg: [],
       usersOnline: [],
-      urlIMG: "/img/java.jpg",
+      urlIMG: "/img/node.png",
     },
     {
       title: "Type Script",
       msg: [],
       usersOnline: [],
-      urlIMG: "/img/java.jpg",
+      urlIMG: "/img/ts-js.png",
     },
     {
       title: "Bugs e soluções",
       msg: [],
       usersOnline: [],
-      urlIMG: "/img/java.jpg",
+      urlIMG: "/img/bug.jpg",
     },
   ];
 
@@ -98,7 +98,7 @@ class App {
           id: socket.id,
           nickname: NickName,
         });
-
+        console.log(this.allUsersOnline);
         this.io.emit("updateTotalUsersOn", this.allUsersOnline);
       });
 
@@ -177,7 +177,7 @@ class App {
         );
 
         this.allUsersOnline = NewArray;
-
+        console.log(this.allUsersOnline);
         this.io.emit("Userdisconnecting", this.allUsersOnline, this.rooms);
       });
     });
